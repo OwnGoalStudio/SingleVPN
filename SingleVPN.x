@@ -9,6 +9,7 @@
 
 static BOOL _isEnabled = NO;
 static BOOL _isVPNEnabled = NO;
+static BOOL _isEnabledReversed = NO;
 static UIColor *_darkReplacementColor = nil;
 static UIColor *_lightReplacementColor = nil;
 
@@ -45,6 +46,7 @@ static void ReloadPrefs() {
 
     NSDictionary *settings = [prefs dictionaryRepresentation];
     _isEnabled = settings[@"IsEnabled"] ? [settings[@"IsEnabled"] boolValue] : YES;
+    _isEnabledReversed = settings[@"IsEnabledReversed"] ? [settings[@"IsEnabledReversed"] boolValue] : NO;
     
     if (settings[@"ForegroundColorLight"]) {
         _lightReplacementColor = smColorWithHexString(settings[@"ForegroundColorLight"]);
@@ -93,11 +95,12 @@ static void ReloadPrefs() {
 }
 
 - (UIColor *)_fillColorForUpdate:(_UIStatusBarItemUpdate *)update entry:(_UIStatusBarDataWifiEntry *)entry {
-    if (!_isVPNEnabled) {
-        return %orig;
+    BOOL decision = _isEnabledReversed ? !_isVPNEnabled : _isVPNEnabled;
+    if (decision) { 
+        return smColorWithTextColor(update.styleAttributes.textColor);
+    } else {
+        return %orig; 
     }
-
-    return smColorWithTextColor(update.styleAttributes.textColor);
 }
 
 %end
@@ -112,13 +115,12 @@ static void ReloadPrefs() {
     UIColor *originalColor = update.styleAttributes.textColor;
     UIColor *newColor = nil;
 
-    if (_isVPNEnabled) {
+    BOOL decision = _isEnabledReversed ? !_isVPNEnabled : _isVPNEnabled;
+    if (decision) {
         newColor = smColorWithTextColor(originalColor);
     }
 
-    if (!newColor) {
-        newColor = originalColor;
-    }
+    if (!newColor) { newColor = originalColor; }
 
     for (_UIStatusBarDisplayItem *item in self.displayItems.allValues) {
         _UIStatusBarStringView *stringView = nil;
@@ -147,7 +149,8 @@ static void ReloadPrefs() {
 - (void)applyStyleAttributes:(_UIStatusBarStyleAttributes *)styleAttrs {
     %orig;
 
-    if (_isVPNEnabled && IsNetworkTypeText(self.text)) {
+    BOOL decision = _isEnabledReversed ? !_isVPNEnabled : _isVPNEnabled;
+    if (decision && IsNetworkTypeText(self.text)) {
         [self setTextColor:smColorWithTextColor(styleAttrs.textColor)];
     }
 }
