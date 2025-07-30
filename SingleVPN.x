@@ -5,7 +5,7 @@
 
 #define IsNetworkTypeText(text) ( \
     [text isEqualToString:@"G"] || [text isEqualToString:@"3G"] || \
-    [text isEqualToString:@"4G"] || [text isEqualToString:@"5G"] || \
+    [text isEqualToString:@"4G"] || [text containsString:@"5G"] || \
     [text isEqualToString:@"LTE"])
 
 static BOOL _isEnabled = NO;
